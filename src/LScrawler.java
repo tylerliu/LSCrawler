@@ -61,10 +61,18 @@ public class LScrawler implements Runnable {
 			System.out.print("enter directory:");
 			path = scan.next();
 		}
+		/**
 		final String staticAdd = "http://www.lschs.org/uploaded/_assets/images/portraits/students/2015-16/";
 		final String suffix = ".jpg";
 		for (int i = 160000; i <= 200000; i++) {
 			new LScrawler(staticAdd + i + suffix, path + i + suffix, isdownload);
+		}
+		These were just for 2015-16, no longer work for today 03/20/2017...
+		 */
+		final String staticAdd = "http://lasalle.finalsite.com/uploaded/_assets/images/portraits/students/2016-17/";
+		final String suffix = ".jpg";
+		for (int counter = 190100; counter <= 202850; counter++){
+			new LScrawler(staticAdd + counter + suffix, path + i +suffix, isdownload);
 		}
 		scan.close();
 	}
