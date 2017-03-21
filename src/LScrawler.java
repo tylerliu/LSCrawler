@@ -1,79 +1,90 @@
 import java.io.*;
 import java.net.*;
 
+import java.util.Calendar;
 import java.util.Scanner;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
-public class LScrawler implements Runnable {
-	private String httpUrl, saveFile;
-	private boolean IsDownload;
-	private Thread t;
+public class LSCrawler implements Runnable {
+    private final String httpUrl, saveFile;
+	private static string isDownload;
+	private final String staticAdd = "http://www.lschs.org/uploaded/_assets/images/portraits/students/"+year + "-" + (year % 100 + 1) +"/";
+	private final String suffix = ".jpg";
+	private Scanner scan = new Scanner(System.in);
+	private String path = null;
+	private boolean UnknownCommand;
+	private boolean Rotate = 1;
 
-	public LScrawler(String httpUrl, String saveFile, boolean isdownload){
-		t = new Thread(this, httpUrl.substring(httpUrl.lastIndexOf('/') + 1));
+	private LSCrawler(String httpUrl, String saveFile){
 		this.httpUrl = httpUrl;
 		this.saveFile = saveFile;
-		this.IsDownload = isdownload;
-		t.start();
 	}
 
 	@Override
 	public void run(){
-		int bytesum = 0, byteread = 0;
-		InputStream inStream = null;
-		URL url = null;
+		int byteRead;
+		InputStream inStream;
+		URL url;
 		try {
 			url = new URL(httpUrl);
-		} catch (MalformedURLException e1) {}
-
-		try {
-			URLConnection conn = url.openConnection();
+            URLConnection conn = url.openConnection();
 			conn.connect();
 			inStream = conn.getInputStream();
-			int lenghtOfFile = conn.getContentLength();
-		} catch (FileNotFoundException e) {// file not exist, skip
-		} catch (Exception e) {}
-		
-		//if no exception, file exist
-		System.out.println("LsFetcher: hit 1 target..." + httpUrl.substring(httpUrl.lastIndexOf('/') + 1));
-		try {
-			if (!this.IsDownload)
-				return;// if not download exit
-			FileOutputStream fs = new FileOutputStream(saveFile);
 
-			byte[] buffer = new byte[1204];
-			while ((byteread = inStream.read(buffer)) != -1) {
-				bytesum += byteread;
-				fs.write(buffer, 0, byteread);
-			}
-			System.out.println(bytesum);
+            byte[] buffer = new byte[1024];
+            if ((byteRead = inStream.read(buffer)) != -1 && new String(buffer).contains("html")) return;
+
+            //if no exception & error, file exist
+            System.out.println("Hit 1 target..." + httpUrl.substring(httpUrl.lastIndexOf('/') + 1));
+
+            if (!isDownload) return;
+            FileOutputStream fs = new FileOutputStream(saveFile);
+            do
+                fs.write(buffer, 0, byteRead);
+            while ((byteRead = inStream.read(buffer)) != -1);
+
 			fs.close();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+		} catch (Exception ignored) {}
+	}
+
+	private void startDownloading(){
+		int year = Calendar.getInstance().get(Calendar.YEAR) - (Calendar.getInstance().get(Calendar.MONTH) < 9 ? 1 : 0);
+		ExecutorService fetcher = Executors.newFixedThreadPool(16);
+		for (int i = (year + 1) % 100 * 10000; i <= ((year + 1) % 100 + 4) * 10000; i++)
+			fetcher.execute(new LSCrawler(staticAdd + i + suffix, path + i + suffix));
+		fetcher.shutdown();
+		scan.close();
+		while (!fetcher.isTerminated()){}
 	}
 
 	public static void main(String[] args) {
-		Scanner scan = new Scanner(System.in);
-		String path = null;
-		System.out.print("Do you want to download the photos?(Y/N)");
-		boolean isdownload = (scan.next().toUpperCase().charAt(0) == 'Y');
-		if (isdownload) {
-			System.out.print("enter directory:");
-			path = scan.next();
-		}
-		/**
-		final String staticAdd = "http://www.lschs.org/uploaded/_assets/images/portraits/students/2015-16/";
-		final String suffix = ".jpg";
-		for (int i = 160000; i <= 200000; i++) {
-			new LScrawler(staticAdd + i + suffix, path + i + suffix, isdownload);
-		}
-		These were just for 2015-16, no longer work for today 03/20/2017...
-		 */
-		final String staticAdd = "http://lasalle.finalsite.com/uploaded/_assets/images/portraits/students/2016-17/";
-		final String suffix = ".jpg";
-		for (int counter = 190100; counter <= 202850; counter++){
-			new LScrawler(staticAdd + counter + suffix, path + i +suffix, isdownload);
-		}
-		scan.close();
+
+		do{
+			if(UnknownCommand){
+				System.out.print("It seems that you refused to Download the Photos...\n");
+			}
+
+			System.out.print("Do you want to download the photos?(Y/N/Quit):");
+			isDownload = scan.next();
+
+			if(isDownload == "Y" || isDownload == "y"){
+				UnknownCommand = 0;
+				System.out.print("enter directory:");
+				path = scan.next();
+				startDownloading();
+				Rotate = 1;
+			}
+			else if(isDownload.toUpperCase() == "QUIT"){Rotate == 0;};
+			else{
+				UnknownCommand = 1;
+				Rotate = 1;
+			}
+
+		}while(Rotate)
+
+        System.out.print("Thanks for using!");
+
+
 	}
 }
