@@ -28,7 +28,7 @@ public class LSCrawler {
 				startDownloading(path);
 				Rotate = 1;
 			}
-			else if(isDownload.toUpperCase() == "QUIT"){Rotate == 0;};
+			else if(isDownload.toUpperCase() == "QUIT"){Rotate = 0;};
 			else{
 				UnknownCommand = 1;
 				Rotate = 1;
