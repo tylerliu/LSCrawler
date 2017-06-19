@@ -1,0 +1,10 @@
+sudo : "required"
+language : "java"
+dist : trusty
+
+before_script:
+
+- mkdir travis
+- cd travis
+
+script : javac ../src/*.java
