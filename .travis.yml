@@ -1,0 +1,4 @@
+sudo : "required"
+language : "java"
+dist : trusty
+script : javac src/*.java
